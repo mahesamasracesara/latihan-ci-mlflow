@@ -11,6 +11,9 @@ on:
 env:
   CSV_URL: "MLproject/train_pca.csv"
 
+permissions:
+  contents: write
+  
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -41,7 +44,24 @@ jobs:
         run: |
           mlflow run . --env-manager=local
 
-      # 6. Save folder mlruns ke repo
+      # 6. Set up Git LFS 
+      - name: Set up Git LFS
+        run: |
+          git config --global user.name "${{ secrets.username }}"
+          git config --global user.email "${{ secrets.email }}"
+
+          # Git LFS sudah pre-install di runner, cukup di-init saja
+          git lfs install
+
+          # Track semua file besar di dalam folder mlruns
+          git lfs track "mlruns/**"
+
+          # .gitattributes berisi aturan LFS
+          git add .gitattributes
+          git commit -m "Track large files in mlruns with Git LFS" || echo "Nothing to commit"
+          git push origin main
+
+      # 7. Save folder mlruns ke repo
       - name: Save mlruns to repo
         run: |
           git config --global user.name "${{ secrets.username }}"
